@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import numpy as np  # Import numpy for reshaping data
 
 app = Flask(__name__)
 
@@ -20,18 +21,15 @@ model = joblib.load(model_path)
 def home():
     return "Welcome to the prediction service."
 
-# Other code remains the same...
-
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
-        input_data = data['input_data']  # Assuming input is passed as a dictionary
-
-        # Process the input data to fit the model's requirements
-        prediction = model.predict([input_data])
+        predictions = []
+        for item in request.json:
+            prediction = model.predict(np.array(list(item.values())).reshape(1, -1))
+            predictions.append({'Total_Unemployment': prediction[0]})
         
-        return jsonify({'Total_Unemployment': prediction[0]})  # Sending the Total_Unemployment prediction
+        return jsonify(predictions)
     except Exception as e:
         return jsonify({'error': str(e)})
 
